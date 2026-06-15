@@ -86,10 +86,35 @@ async function fetchPersonnel() {
     }
 }
 
+// Auxiliar: Tenta converter string de data em objeto Date (suporta DD/MM/AAAA e AAAA-MM-DD com barras ou traços)
+function parseDateString(dateStr) {
+    if (!dateStr) return null;
+    const cleanStr = dateStr.trim();
+    const parts = cleanStr.split(/[\/\-]/).map(p => p.trim());
+    if (parts.length !== 3) return null;
+
+    let day, month, year;
+    if (parts[0].length === 4) { // Formato AAAA-MM-DD
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+    } else if (parts[2].length === 4) { // Formato DD/MM/AAAA
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        year = parseInt(parts[2], 10);
+    } else {
+        return null;
+    }
+
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+    const dateObj = new Date(year, month, day);
+    if (isNaN(dateObj.getTime())) return null;
+    return dateObj;
+}
+
 // Cálculos automáticos de datas e prazos baseados na data atual (2026-06-15)
 function recalculateItemFields(item) {
-    // Usaremos a data do sistema ou fixada se necessário.
-    // Usar new Date() garante que o sistema de gerenciamento sempre trabalhe de forma dinâmica e atual.
     const today = new Date();
 
     // 1. Cálculo de Idade
@@ -124,9 +149,8 @@ function recalculateItemFields(item) {
 
     // 4. Inspeção de Saúde e Vencimento
     if (item.healthInspectionValidity) {
-        const dateParts = item.healthInspectionValidity.split('/');
-        if (dateParts.length === 3) {
-            const validityDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+        const validityDate = parseDateString(item.healthInspectionValidity);
+        if (validityDate) {
             const diffTime = validityDate - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             item.healthInspectionDaysLeft = diffDays;
@@ -150,10 +174,8 @@ function recalculateItemFields(item) {
 
 // Auxiliar: Diferença entre duas datas em Anos, Meses e Dias
 function calculateDateDifference(startDateStr, endDateObj) {
-    const parts = startDateStr.split('/');
-    if (parts.length !== 3) return { years: 0, months: 0, days: 0 };
-    
-    const start = new Date(parts[2], parts[1] - 1, parts[0]);
+    const start = parseDateString(startDateStr);
+    if (!start) return { years: 0, months: 0, days: 0 };
     const end = endDateObj;
 
     if (start > end) return { years: 0, months: 0, days: 0 };
@@ -178,9 +200,8 @@ function calculateDateDifference(startDateStr, endDateObj) {
 
 // Auxiliar: Cálculo de idade
 function calculateAge(birthDateStr, today) {
-    const parts = birthDateStr.split('/');
-    if (parts.length !== 3) return null;
-    const birth = new Date(parts[2], parts[1] - 1, parts[0]);
+    const birth = parseDateString(birthDateStr);
+    if (!birth) return null;
     let age = today.getFullYear() - birth.getFullYear();
     const m = today.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
@@ -394,20 +415,30 @@ function setupEventListeners() {
         const praca = pracaInput.value;
         const pres = presInput.value;
 
-        if (birth && birth.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const birthDateObj = parseDateString(birth);
+        if (birthDateObj) {
             const age = calculateAge(birth, today);
-            document.getElementById('field-age').value = age || '';
+            document.getElementById('field-age').value = age !== null ? age : '';
+        } else {
+            document.getElementById('field-age').value = '';
         }
         
-        if (praca && praca.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const pracaDateObj = parseDateString(praca);
+        if (pracaDateObj) {
             const diff = calculateDateDifference(praca, today);
             document.getElementById('field-serviceTime').value = `${diff.years}A ${diff.months}M ${diff.days}D`;
             document.getElementById('field-timeToReserve').value = Math.max(0, 30 - diff.years);
+        } else {
+            document.getElementById('field-serviceTime').value = '';
+            document.getElementById('field-timeToReserve').value = '';
         }
 
-        if (pres && pres.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const presDateObj = parseDateString(pres);
+        if (presDateObj) {
             const diff = calculateDateDifference(pres, today);
             document.getElementById('field-timeDtceaSj').value = `${diff.years}A ${diff.months}M ${diff.days}D`;
+        } else {
+            document.getElementById('field-timeDtceaSj').value = '';
         }
     };
 
