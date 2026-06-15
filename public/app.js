@@ -401,8 +401,15 @@ function setupEventListeners() {
         closeModal();
     });
 
+    let isMouseDownOnOverlay = false;
+    modal.addEventListener('mousedown', (e) => {
+        isMouseDownOnOverlay = (e.target === modal);
+    });
+
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
+        if (e.target === modal && isMouseDownOnOverlay) {
+            closeModal();
+        }
     });
 
     // Inputs dinâmicos no form para prever cálculos em tempo real
