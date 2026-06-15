@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGP Ativo | DTCEA-SJ</title>
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="icon" type="image/png" href="dtcea_sj_logo.png">
+    <link rel="stylesheet" href="style-fab.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="header-brand">
+                <div class="fab-badge">
+                    <img src="dtcea_sj_logo.png" alt="Brasão DTCEA-SJ">
+                </div>
+                <div>
+                    <h1>SGP Ativo</h1>
+                    <p class="subtitle">Controle Operacional Interno · DTCEA-SJ</p>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- DASHBOARD CARDS -->
+            <div class="stats-grid">
+                <div class="card">
+                    <div class="card-title">Efetivo Cadastrado</div>
+                    <div class="card-value" id="dash-total">0</div>
+                    <div class="card-detail">Militares ativos no DTCEA-SJ</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Inspeção de Saúde</div>
+                    <div class="card-value" id="dash-inspections">0</div>
+                    <div class="card-detail" id="dash-inspections-detail">Verificando vencimentos...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Próximos da Reserva</div>
+                    <div class="card-value" id="dash-reserves">0</div>
+                    <div class="card-detail" id="dash-reserves-detail">Análise de tempo faltante</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Permanência Média</div>
+                    <div class="card-value" id="dash-avg-time">0.0 Anos</div>
+                    <div class="card-detail">Tempo médio no DTCEA-SJ</div>
+                </div>
+            </div>
+
+            <!-- CONTROLES -->
+            <div class="controls-bar">
+                <div class="search-filter-group">
+                    <div class="input-container">
+                        <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                        <input type="text" id="search-input" class="search-input" placeholder="Buscar por Nome, Identidade, CPF, SARAM...">
+                    </div>
+                    
+                    <select id="filter-rank" class="filter-select">
+                        <option value="">Todos os Postos</option>
+                    </select>
+
+                    <select id="filter-health" class="filter-select">
+                        <option value="">Inspeção de Saúde (Todas)</option>
+                        <option value="VALID">Válida</option>
+                        <option value="WARNING">Expira em breve (&le; 60 dias)</option>
+                        <option value="EXPIRED">Vencida / Pendente</option>
+                    </select>
+
+                    <select id="filter-reserve" class="filter-select">
+                        <option value="">Tempo para Reserva (Todos)</option>
+                        <option value="UPCOMING">Próxima (&le; 2 anos)</option>
+                        <option value="MID">Médio (2 a 5 anos)</option>
+                        <option value="LONG">Longo (&gt; 5 anos)</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-gold" onclick="openAddModal()">
+                        <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i> Novo Militar
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportToCSV()" title="Exportar CSV">
+                        <i data-lucide="download" style="width: 16px; height: 16px;"></i> Exportar
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="resetDatabase()" title="Resetar banco para dados originais do dados.csv">
+                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Resetar Banco
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABELA DE DADOS -->
+            <div class="table-container">
+                <table id="personnel-table">
+                    <thead>
+                        <tr>
+                            <th>QTD/ID</th>
+                            <th>Posto/Grad</th>
+                            <th>Nome Completo</th>
+                            <th>Nome de Guerra</th>
+                            <th>Identidade</th>
+                            <th>CPF</th>
+                            <th>SARAM</th>
+                            <th>Nascimento (Idade)</th>
+                            <th>Tempo de Serviço</th>
+                            <th>Reserva</th>
+                            <th>Tempo DTCEA-SJ</th>
+                            <th>Inspeção de Saúde</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="13" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                                Carregando dados da base sgp_dtceasj...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL CADASTRO / EDIÇÃO -->
+    <div id="person-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="person-modal-title">Ficha Cadastral do Militar</h3>
+                <button class="modal-close-btn" id="close-modal-btn">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <form id="person-form">
+                <input type="hidden" id="modal-action" value="add">
+                <input type="hidden" id="modal-edit-id" value="">
+                
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <!-- Identificação Básica -->
+                        <div class="form-group">
+                            <label for="field-id">ID (Gerado Automaticamente)</label>
+                            <input type="text" id="field-id" class="form-control" placeholder="Automático" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-rank">Posto / Graduação</label>
+                            <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO BCO, Sgt SAI..." required>
+                        </div>
+                        <div class="form-group col-full">
+                            <label for="field-name">Nome Completo</label>
+                            <input type="text" id="field-name" class="form-control" style="text-transform: uppercase;" placeholder="NOME COMPLETO DO MILITAR" required>
+                        </div>
+                        <div class="form-group col-full">
+                            <label for="field-warName">Nome de Guerra</label>
+                            <input type="text" id="field-warName" class="form-control" style="text-transform: uppercase;" placeholder="NOME DE GUERRA DO MILITAR" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-identity">Identidade</label>
+                            <input type="text" id="field-identity" class="form-control" placeholder="Ex: 515.740">
+                        </div>
+                        <div class="form-group">
+                            <label for="field-cpf">CPF</label>
+                            <input type="text" id="field-cpf" class="form-control" placeholder="Ex: 091.303.727-39">
+                        </div>
+                        <div class="form-group">
+                            <label for="field-saram">SARAM</label>
+                            <input type="text" id="field-saram" class="form-control" placeholder="Ex: 393.068-8">
+                        </div>
+
+                        <!-- Administrativo -->
+                        <div class="form-group">
+                            <label for="field-birthDate">Data de Nascimento</label>
+                            <input type="text" id="field-birthDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-age">Idade (Autocalculada)</label>
+                            <input type="number" id="field-age" class="form-control" placeholder="Preencha Nascimento" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-pracaDate">Data de Praça</label>
+                            <input type="text" id="field-pracaDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-lastPromotionDate">Última Promoção</label>
+                            <input type="text" id="field-lastPromotionDate" class="form-control" placeholder="DD/MM/AAAA">
+                        </div>
+                        <div class="form-group">
+                            <label for="field-presentationDate">Apresentação no DTCEA</label>
+                            <input type="text" id="field-presentationDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                        </div>
+
+                        <!-- Inspeção de Saúde -->
+                        <div class="form-group">
+                            <label for="field-healthInspectionDate">Realização Insp. Saúde</label>
+                            <input type="text" id="field-healthInspectionDate" class="form-control" placeholder="DD/MM/AAAA">
+                        </div>
+                        <div class="form-group">
+                            <label for="field-healthInspectionValidity">Validade Insp. Saúde</label>
+                            <input type="text" id="field-healthInspectionValidity" class="form-control" placeholder="DD/MM/AAAA">
+                        </div>
+
+                        <!-- Cálculos Automáticos de Serviço -->
+                        <div class="form-group">
+                            <label for="field-serviceTime">Tempo de Serviço</label>
+                            <input type="text" id="field-serviceTime" class="form-control" placeholder="Cálculo automático" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-timeToReserve">Anos para Reserva</label>
+                            <input type="number" id="field-timeToReserve" class="form-control" placeholder="Cálculo automático" readonly>
+                        </div>
+                        <div class="form-group col-full">
+                            <label for="field-timeDtceaSj">Tempo no DTCEA-SJ</label>
+                            <input type="text" id="field-timeDtceaSj" class="form-control" placeholder="Cálculo automático" readonly>
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="form-group col-full">
+                            <label for="field-observations">Observações</label>
+                            <textarea id="field-observations" class="form-control" placeholder="Anotações internas..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancelar</button>
+                    <button type="submit" class="btn btn-gold">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Principal -->
+    <script src="app.js"></script>
+</body>
+
+</html>
