@@ -268,6 +268,7 @@ function renderTable() {
 
     const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
     const rankFilter = document.getElementById('filter-rank').value;
+    const specialtyFilter = document.getElementById('filter-specialty').value;
     const healthFilter = document.getElementById('filter-health').value;
     const reserveFilter = document.getElementById('filter-reserve').value;
 
@@ -280,6 +281,7 @@ function renderTable() {
             p.saram.toLowerCase().includes(searchQuery);
 
         const matchRank = !rankFilter || p.rank === rankFilter;
+        const matchSpecialty = !specialtyFilter || p.specialty === specialtyFilter;
 
         let matchHealth = true;
         if (healthFilter) {
@@ -296,7 +298,7 @@ function renderTable() {
             if (reserveFilter === 'LONG') matchReserve = p.timeToReserve !== null && p.timeToReserve > 5;
         }
 
-        return matchSearch && matchRank && matchHealth && matchReserve;
+        return matchSearch && matchRank && matchSpecialty && matchHealth && matchReserve;
     });
 
     if (filtered.length === 0) {
@@ -356,9 +358,9 @@ function renderTable() {
 
 // Filtros dinâmicos baseados no cadastro existente
 function populateFilters() {
+    // 1. Postos
     const rankFilter = document.getElementById('filter-rank');
     const currentVal = rankFilter.value;
-    
     const ranks = [...new Set(personnelData.map(p => p.rank))].filter(Boolean).sort();
     
     rankFilter.innerHTML = '<option value="">Todos os Postos</option>';
@@ -368,14 +370,28 @@ function populateFilters() {
         opt.innerText = r;
         rankFilter.appendChild(opt);
     });
-    
     rankFilter.value = currentVal;
+
+    // 2. Especialidades
+    const specialtyFilter = document.getElementById('filter-specialty');
+    const currentSpecVal = specialtyFilter.value;
+    const specialties = [...new Set(personnelData.map(p => p.specialty))].filter(Boolean).sort();
+
+    specialtyFilter.innerHTML = '<option value="">Todas as Especialidades</option>';
+    specialties.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.innerText = s;
+        specialtyFilter.appendChild(opt);
+    });
+    specialtyFilter.value = currentSpecVal;
 }
 
 // Configuração de Event Listeners
 function setupEventListeners() {
     document.getElementById('search-input').addEventListener('input', renderTable);
     document.getElementById('filter-rank').addEventListener('change', renderTable);
+    document.getElementById('filter-specialty').addEventListener('change', renderTable);
     document.getElementById('filter-health').addEventListener('change', renderTable);
     document.getElementById('filter-reserve').addEventListener('change', renderTable);
 
