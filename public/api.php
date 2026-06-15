@@ -57,6 +57,7 @@ function savePerson() {
 
     $id = isset($data['id']) ? intval($data['id']) : 0;
     $posto_grad = isset($data['posto_grad']) ? $conn->real_escape_string($data['posto_grad']) : '';
+    $especialidade = isset($data['especialidade']) ? $conn->real_escape_string($data['especialidade']) : '';
     $nome = isset($data['nome']) ? $conn->real_escape_string($data['nome']) : '';
     $nome_guerra = isset($data['nome_guerra']) ? $conn->real_escape_string($data['nome_guerra']) : '';
     $identidade = isset($data['identidade']) ? $conn->real_escape_string($data['identidade']) : '';
@@ -70,9 +71,10 @@ function savePerson() {
     $validade_insp_saude = isset($data['validade_insp_saude']) ? $conn->real_escape_string($data['validade_insp_saude']) : '';
     $observacoes = isset($data['observacoes']) ? $conn->real_escape_string($data['observacoes']) : '';
 
-    // Enforçar maiúsculas para Nome Completo e Nome de Guerra
+    // Enforçar maiúsculas para Nome Completo, Nome de Guerra e Especialidade
     $nome = mb_strtoupper($nome, 'UTF-8');
     $nome_guerra = mb_strtoupper($nome_guerra, 'UTF-8');
+    $especialidade = mb_strtoupper($especialidade, 'UTF-8');
 
     if (empty($nome) || empty($posto_grad)) {
         echo json_encode(["success" => false, "message" => "Nome e Posto/Graduação são obrigatórios."]);
@@ -83,6 +85,7 @@ function savePerson() {
         // Update
         $sql = "UPDATE militares SET 
                 posto_grad = '$posto_grad', 
+                especialidade = '$especialidade', 
                 nome = '$nome', 
                 nome_guerra = '$nome_guerra',
                 identidade = '$identidade', 
@@ -105,9 +108,9 @@ function savePerson() {
     } else {
         // Insert
         $sql = "INSERT INTO militares 
-                (posto_grad, nome, nome_guerra, identidade, cpf, saram, nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, observacoes) 
+                (posto_grad, especialidade, nome, nome_guerra, identidade, cpf, saram, nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, observacoes) 
                 VALUES 
-                ('$posto_grad', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram', '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$observacoes')";
+                ('$posto_grad', '$especialidade', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram', '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$observacoes')";
         
         if ($conn->query($sql)) {
             $newId = $conn->insert_id;
@@ -166,9 +169,14 @@ function seedDatabaseFromCSV() {
 
         // Limpar dados
         $id = intval($row[0]);
-        $posto_grad = $conn->real_escape_string($row[1]);
+        $csv_posto_grad = trim($conn->real_escape_string($row[1]));
         $nome = mb_strtoupper($conn->real_escape_string($row[2]), 'UTF-8');
         
+        // Dividir Posto/Grad e Especialidade
+        $parts = explode(' ', $csv_posto_grad, 2);
+        $posto_grad = $parts[0];
+        $especialidade = isset($parts[1]) ? $parts[1] : '';
+
         // Estipula um Nome de Guerra padrão baseado no último sobrenome
         $nameParts = explode(' ', trim($nome));
         $nome_guerra = end($nameParts);
@@ -188,9 +196,9 @@ function seedDatabaseFromCSV() {
 
         // Inserir mantendo o ID original do CSV
         $sql = "INSERT INTO militares 
-                (id, posto_grad, nome, nome_guerra, identidade, cpf, saram, nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, observacoes) 
+                (id, posto_grad, especialidade, nome, nome_guerra, identidade, cpf, saram, nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, observacoes) 
                 VALUES 
-                ($id, '$posto_grad', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram', '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$observacoes')";
+                ($id, '$posto_grad', '$especialidade', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram', '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$observacoes')";
         $conn->query($sql);
     }
     

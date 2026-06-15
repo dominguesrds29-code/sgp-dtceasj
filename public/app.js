@@ -35,6 +35,7 @@ async function fetchPersonnel() {
                 const p = {
                     id: item.id,
                     rank: item.posto_grad,
+                    specialty: item.especialidade,
                     name: item.nome,
                     warName: item.nome_guerra,
                     identity: item.identidade,
@@ -273,6 +274,7 @@ function renderTable() {
     const filtered = personnelData.filter(p => {
         const matchSearch = !searchQuery || 
             p.name.toLowerCase().includes(searchQuery) ||
+            p.specialty.toLowerCase().includes(searchQuery) ||
             p.identity.toLowerCase().includes(searchQuery) ||
             p.cpf.toLowerCase().includes(searchQuery) ||
             p.saram.toLowerCase().includes(searchQuery);
@@ -300,7 +302,7 @@ function renderTable() {
     if (filtered.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="13" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                <td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
                     Nenhum militar localizado com os filtros selecionados.
                 </td>
             </tr>
@@ -325,8 +327,8 @@ function renderTable() {
         const reserveText = p.timeToReserve !== null ? `${p.timeToReserve} Anos` : 'N/A';
 
         tr.innerHTML = `
-            <td>${p.id}</td>
             <td><span class="rank-badge">${p.rank}</span></td>
+            <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.specialty || '-'}</span></td>
             <td style="font-weight: 600; color: var(--text-primary);">${p.name}</td>
             <td style="font-weight: 600; color: var(--text-primary);">${p.warName || '-'}</td>
             <td>${p.identity || '-'}</td>
@@ -337,7 +339,6 @@ function renderTable() {
             <td>${reserveText}</td>
             <td>${p.timeDtceaSj || '-'}</td>
             <td>${healthCell}</td>
-            <td>${p.observations || ''}</td>
             <td>
                 <div class="action-btns">
                     <button class="btn btn-secondary btn-sm" onclick="editPerson('${p.id}')" title="Editar"><i data-lucide="edit-3" style="width: 14px; height: 14px;"></i></button>
@@ -453,6 +454,7 @@ function openAddModal() {
     document.getElementById('modal-edit-id').value = '';
     document.getElementById('person-modal-title').innerText = "Novo Cadastro de Militar";
     document.getElementById('field-id').value = ""; // Gerado automatico no banco
+    document.getElementById('field-specialty').value = "";
     document.getElementById('person-modal').classList.add('active');
 }
 
@@ -462,11 +464,12 @@ function editPerson(id) {
 
     document.getElementById('modal-action').value = 'edit';
     document.getElementById('modal-edit-id').value = id;
-    document.getElementById('person-modal-title').innerText = `Editar Ficha - ${p.rank} ${p.name}`;
+    document.getElementById('person-modal-title').innerText = `Editar Ficha - ${p.rank} ${p.specialty || ''} ${p.name}`;
 
     // Popula campos
     document.getElementById('field-id').value = p.id;
     document.getElementById('field-rank').value = p.rank;
+    document.getElementById('field-specialty').value = p.specialty || '';
     document.getElementById('field-name').value = p.name;
     document.getElementById('field-warName').value = p.warName || '';
     document.getElementById('field-identity').value = p.identity;
@@ -493,6 +496,7 @@ async function savePerson() {
 
     const payload = {
         posto_grad: document.getElementById('field-rank').value.trim(),
+        especialidade: document.getElementById('field-specialty').value.trim(),
         nome: document.getElementById('field-name').value.trim().toUpperCase(),
         nome_guerra: document.getElementById('field-warName').value.trim().toUpperCase(),
         identidade: document.getElementById('field-identity').value.trim(),
@@ -556,15 +560,15 @@ async function deletePerson(id) {
 // ─── EXPORTAÇÃO CSV ───
 function exportToCSV() {
     const headers = [
-        "QTD/ID", "Posto/Grad.", "Nome", "Nome de Guerra", "Identidade", "CPF", "SARAM", "Nascimento", "Idade", "Praça", 
+        "Posto/Grad.", "Especialidade", "Nome", "Nome de Guerra", "Identidade", "CPF", "SARAM", "Nascimento", "Idade", "Praça", 
         "Últ. Promoção", "Apresentação no DTCEA", "Data Realização Insp. Saúde", "Validade Insp. Saúde",
         "Tempo de Serviço", "Tempo faltante para reserva", "Tempo DTCEA-SJ", "OBSERVAÇÕES"
     ];
 
     const rows = personnelData.map(p => {
         return [
-            p.id,
             p.rank,
+            p.specialty || '',
             p.name,
             p.warName || '',
             p.identity,

@@ -96,8 +96,8 @@
                 <table id="personnel-table">
                     <thead>
                         <tr>
-                            <th>QTD/ID</th>
                             <th>Posto/Grad</th>
+                            <th>Especialidade</th>
                             <th>Nome Completo</th>
                             <th>Nome de Guerra</th>
                             <th>Identidade</th>
@@ -108,13 +108,12 @@
                             <th>Reserva</th>
                             <th>Tempo DTCEA-SJ</th>
                             <th>Inspeção de Saúde</th>
-                            <th>Observações</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="13" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
                                 Carregando dados da base sgp_dtceasj...
                             </td>
                         </tr>
@@ -146,7 +145,11 @@
                         </div>
                         <div class="form-group">
                             <label for="field-rank">Posto / Graduação</label>
-                            <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO BCO, Sgt SAI..." required>
+                            <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO, 1S, 2S, CAP..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-specialty">Especialidade</label>
+                            <input type="text" id="field-specialty" class="form-control" style="text-transform: uppercase;" placeholder="Ex: BCT, BCO, BET..." required>
                         </div>
                         <div class="form-group col-full">
                             <label for="field-name">Nome Completo</label>
