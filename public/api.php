@@ -21,9 +21,80 @@ switch ($action) {
     case 'reset':
         resetFromCSV();
         break;
+    case 'list_secoes':
+        getSecoesList();
+        break;
+    case 'save_secao':
+        saveSecao();
+        break;
+    case 'delete_secao':
+        deleteSecao();
+        break;
     default:
         echo json_encode(["success" => false, "message" => "Ação inválida."]);
         break;
+}
+
+function getSecoesList() {
+    global $conn;
+    $result = $conn->query("SELECT * FROM secoes ORDER BY sigla ASC");
+    $list = [];
+    while ($row = $result->fetch_assoc()) {
+        $list[] = $row;
+    }
+    echo json_encode(["success" => true, "data" => $list]);
+}
+
+function saveSecao() {
+    global $conn;
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (!$data) {
+        echo json_encode(["success" => false, "message" => "Dados inválidos."]);
+        return;
+    }
+    $id = isset($data['id']) ? intval($data['id']) : 0;
+    $sigla = isset($data['sigla']) ? mb_strtoupper($conn->real_escape_string($data['sigla']), 'UTF-8') : '';
+    $nome = isset($data['nome']) ? mb_strtoupper($conn->real_escape_string($data['nome']), 'UTF-8') : '';
+    $chefe_id = (isset($data['chefe_id']) && $data['chefe_id'] !== '') ? intval($data['chefe_id']) : 'NULL';
+
+    if (empty($sigla)) {
+        echo json_encode(["success" => false, "message" => "Sigla é obrigatória."]);
+        return;
+    }
+
+    if ($id > 0) {
+        $sql = "UPDATE secoes SET sigla='$sigla', nome='$nome', chefe_id=$chefe_id WHERE id=$id";
+        if ($conn->query($sql)) {
+            echo json_encode(["success" => true, "message" => "Seção atualizada com sucesso."]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
+        }
+    } else {
+        $sql = "INSERT INTO secoes (sigla, nome, chefe_id) VALUES ('$sigla', '$nome', $chefe_id)";
+        if ($conn->query($sql)) {
+            echo json_encode(["success" => true, "message" => "Seção cadastrada com sucesso."]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Erro ao cadastrar: " . $conn->error]);
+        }
+    }
+}
+
+function deleteSecao() {
+    global $conn;
+    $data = json_decode(file_get_contents("php://input"), true);
+    $id = isset($data['id']) ? intval($data['id']) : 0;
+    
+    if ($id <= 0) {
+        echo json_encode(["success" => false, "message" => "ID inválido para exclusão."]);
+        return;
+    }
+
+    $sql = "DELETE FROM secoes WHERE id = $id";
+    if ($conn->query($sql)) {
+        echo json_encode(["success" => true, "message" => "Seção removida com sucesso."]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Erro ao excluir: " . $conn->error]);
+    }
 }
 
 function getPersonnelList() {
@@ -69,12 +140,15 @@ function savePerson() {
     $apresentacao_dtcea = isset($data['apresentacao_dtcea']) ? $conn->real_escape_string($data['apresentacao_dtcea']) : '';
     $data_insp_saude = isset($data['data_insp_saude']) ? $conn->real_escape_string($data['data_insp_saude']) : '';
     $validade_insp_saude = isset($data['validade_insp_saude']) ? $conn->real_escape_string($data['validade_insp_saude']) : '';
+    $secao = isset($data['secao']) ? mb_strtoupper($conn->real_escape_string($data['secao']), 'UTF-8') : '';
+    $prorrogacao = isset($data['prorrogacao']) ? $conn->real_escape_string($data['prorrogacao']) : '';
     $observacoes = isset($data['observacoes']) ? $conn->real_escape_string($data['observacoes']) : '';
 
     // Enforçar maiúsculas para Nome Completo, Nome de Guerra e Especialidade
     $nome = mb_strtoupper($nome, 'UTF-8');
     $nome_guerra = mb_strtoupper($nome_guerra, 'UTF-8');
     $especialidade = mb_strtoupper($especialidade, 'UTF-8');
+    $secao = mb_strtoupper($secao, 'UTF-8');
 
     if (empty($nome) || empty($posto_grad)) {
         echo json_encode(["success" => false, "message" => "Nome e Posto/Graduação são obrigatórios."]);
@@ -82,23 +156,12 @@ function savePerson() {
     }
 
     if ($id > 0) {
-        // Update
         $sql = "UPDATE militares SET 
-                posto_grad = '$posto_grad', 
-                especialidade = '$especialidade', 
-                nome = '$nome', 
-                nome_guerra = '$nome_guerra',
-                identidade = '$identidade', 
-                cpf = '$cpf', 
-                saram = '$saram', 
-                nascimento = '$nascimento', 
-                praca = '$praca', 
-                ult_promocao = '$ult_promocao', 
-                apresentacao_dtcea = '$apresentacao_dtcea', 
-                data_insp_saude = '$data_insp_saude', 
-                validade_insp_saude = '$validade_insp_saude', 
-                observacoes = '$observacoes' 
-                WHERE id = $id";
+                posto_grad='$posto_grad', especialidade='$especialidade', nome='$nome', nome_guerra='$nome_guerra',
+                identidade='$identidade', cpf='$cpf', saram='$saram', nascimento='$nascimento', praca='$praca', 
+                ult_promocao='$ult_promocao', apresentacao_dtcea='$apresentacao_dtcea', 
+                data_insp_saude='$data_insp_saude', validade_insp_saude='$validade_insp_saude', secao='$secao', prorrogacao='$prorrogacao', observacoes='$observacoes'
+                WHERE id=$id";
         
         if ($conn->query($sql)) {
             echo json_encode(["success" => true, "message" => "Registro atualizado com sucesso.", "id" => $id]);
@@ -107,10 +170,13 @@ function savePerson() {
         }
     } else {
         // Insert
-        $sql = "INSERT INTO militares 
-                (posto_grad, especialidade, nome, nome_guerra, identidade, cpf, saram, nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, observacoes) 
-                VALUES 
-                ('$posto_grad', '$especialidade', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram', '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$observacoes')";
+        $sql = "INSERT INTO militares (
+                    posto_grad, especialidade, nome, nome_guerra, identidade, cpf, saram,
+                    nascimento, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, secao, prorrogacao, observacoes
+                ) VALUES (
+                    '$posto_grad', '$especialidade', '$nome', '$nome_guerra', '$identidade', '$cpf', '$saram',
+                    '$nascimento', '$praca', '$ult_promocao', '$apresentacao_dtcea', '$data_insp_saude', '$validade_insp_saude', '$secao', '$prorrogacao', '$observacoes'
+                )";
         
         if ($conn->query($sql)) {
             $newId = $conn->insert_id;

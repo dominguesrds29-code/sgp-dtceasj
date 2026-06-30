@@ -2,6 +2,7 @@
 // Controle Frontend e Integração com API PHP
 
 let personnelData = [];
+let secoesData = [];
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +16,7 @@ async function initApp() {
     }
     
     // Carrega dados da API PHP
+    await fetchSecoes();
     await fetchPersonnel();
 
     // Configura eventos de formulários e modais
@@ -36,6 +38,7 @@ async function fetchPersonnel() {
                     id: item.id,
                     rank: item.posto_grad,
                     specialty: item.especialidade,
+                    secao: item.secao,
                     name: item.nome,
                     warName: item.nome_guerra,
                     identity: item.identidade,
@@ -47,6 +50,7 @@ async function fetchPersonnel() {
                     presentationDate: item.apresentacao_dtcea,
                     healthInspectionDate: item.data_insp_saude,
                     healthInspectionValidity: item.validade_insp_saude,
+                    prorrogacaoDate: item.prorrogacao,
                     observations: item.observacoes
                 };
                 
@@ -170,6 +174,22 @@ function recalculateItemFields(item) {
     } else {
         item.healthInspectionDaysLeft = null;
         item.healthInspectionObs = "NOT_DONE";
+    }
+
+    // 5. Prorrogação
+    item.prorrogacaoDaysLeft = null;
+    item.prorrogacaoWarning = false;
+    if (item.prorrogacaoDate) {
+        const prorrogacaoObj = parseDateString(item.prorrogacaoDate);
+        if (prorrogacaoObj) {
+            const diffTime = prorrogacaoObj - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            item.prorrogacaoDaysLeft = diffDays;
+            
+            if (diffDays <= 90 && diffDays >= 0) {
+                item.prorrogacaoWarning = true;
+            }
+        }
     }
 }
 
@@ -328,10 +348,22 @@ function renderTable() {
 
         const reserveText = p.timeToReserve !== null ? `${p.timeToReserve} Anos` : 'N/A';
 
+        let trStyle = "";
+        let nameStyle = "font-weight: 600; color: var(--text-primary);";
+        let prorrogacaoCell = p.prorrogacaoDate || '-';
+        if (p.prorrogacaoWarning) {
+            trStyle = "background-color: var(--accent-orange-bg);";
+            nameStyle = "font-weight: bold; color: var(--accent-orange);";
+            prorrogacaoCell = `<span style="color: var(--accent-orange); font-weight: bold;">${p.prorrogacaoDate} <small>(${p.prorrogacaoDaysLeft}d)</small></span>`;
+        }
+
+        if (trStyle) tr.setAttribute('style', trStyle);
+
         tr.innerHTML = `
             <td><span class="rank-badge">${p.rank}</span></td>
             <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.specialty || '-'}</span></td>
-            <td style="font-weight: 600; color: var(--text-primary);">${p.name}</td>
+            <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.secao || '-'}</span></td>
+            <td style="${nameStyle}">${p.name}</td>
             <td style="font-weight: 600; color: var(--text-primary);">${p.warName || '-'}</td>
             <td>${p.identity || '-'}</td>
             <td>${p.cpf || '-'}</td>
@@ -340,6 +372,7 @@ function renderTable() {
             <td>${p.serviceTime || '-'}</td>
             <td>${reserveText}</td>
             <td>${p.timeDtceaSj || '-'}</td>
+            <td>${prorrogacaoCell}</td>
             <td>${healthCell}</td>
             <td>
                 <div class="action-btns">
@@ -478,6 +511,8 @@ function openAddModal() {
     document.getElementById('person-modal-title').innerText = "Novo Cadastro de Militar";
     document.getElementById('field-id').value = ""; // Gerado automatico no banco
     document.getElementById('field-specialty').value = "";
+    document.getElementById('field-secao').value = "";
+    document.getElementById('field-prorrogacao').value = "";
     document.getElementById('person-modal').classList.add('active');
 }
 
@@ -493,6 +528,7 @@ function editPerson(id) {
     document.getElementById('field-id').value = p.id;
     document.getElementById('field-rank').value = p.rank;
     document.getElementById('field-specialty').value = p.specialty || '';
+    document.getElementById('field-secao').value = p.secao || '';
     document.getElementById('field-name').value = p.name;
     document.getElementById('field-warName').value = p.warName || '';
     document.getElementById('field-identity').value = p.identity;
@@ -505,6 +541,7 @@ function editPerson(id) {
     document.getElementById('field-presentationDate').value = p.presentationDate;
     document.getElementById('field-healthInspectionDate').value = p.healthInspectionDate;
     document.getElementById('field-healthInspectionValidity').value = p.healthInspectionValidity;
+    document.getElementById('field-prorrogacao').value = p.prorrogacaoDate || '';
     document.getElementById('field-serviceTime').value = p.serviceTime || '';
     document.getElementById('field-timeToReserve').value = p.timeToReserve !== null ? p.timeToReserve : '';
     document.getElementById('field-timeDtceaSj').value = p.timeDtceaSj || '';
@@ -525,14 +562,21 @@ async function savePerson() {
         identidade: document.getElementById('field-identity').value.trim(),
         cpf: document.getElementById('field-cpf').value.trim(),
         saram: document.getElementById('field-saram').value.trim(),
+        secao: document.getElementById('field-secao').value.trim().toUpperCase(),
         nascimento: document.getElementById('field-birthDate').value.trim(),
         praca: document.getElementById('field-pracaDate').value.trim(),
         ult_promocao: document.getElementById('field-lastPromotionDate').value.trim(),
         apresentacao_dtcea: document.getElementById('field-presentationDate').value.trim(),
         data_insp_saude: document.getElementById('field-healthInspectionDate').value.trim(),
         validade_insp_saude: document.getElementById('field-healthInspectionValidity').value.trim(),
+        prorrogacao: document.getElementById('field-prorrogacao').value.trim(),
         observacoes: document.getElementById('field-observations').value.trim()
     };
+
+    if (!payload.secao) {
+        alert("A Seção é obrigatória. Por favor, selecione uma seção antes de salvar.");
+        return;
+    }
 
     if (action === 'edit') {
         payload.id = editId;
@@ -583,8 +627,8 @@ async function deletePerson(id) {
 // ─── EXPORTAÇÃO CSV ───
 function exportToCSV() {
     const headers = [
-        "Posto/Grad.", "Especialidade", "Nome", "Nome de Guerra", "Identidade", "CPF", "SARAM", "Nascimento", "Idade", "Praça", 
-        "Últ. Promoção", "Apresentação no DTCEA", "Data Realização Insp. Saúde", "Validade Insp. Saúde",
+        "Posto/Grad.", "Especialidade", "Seção", "Nome", "Nome de Guerra", "Identidade", "CPF", "SARAM", "Nascimento", "Idade", "Praça", 
+        "Últ. Promoção", "Apresentação no DTCEA", "Prorrogação", "Data Realização Insp. Saúde", "Validade Insp. Saúde",
         "Tempo de Serviço", "Tempo faltante para reserva", "Tempo DTCEA-SJ", "OBSERVAÇÕES"
     ];
 
@@ -592,6 +636,7 @@ function exportToCSV() {
         return [
             p.rank,
             p.specialty || '',
+            p.secao || '',
             p.name,
             p.warName || '',
             p.identity,
@@ -602,6 +647,7 @@ function exportToCSV() {
             p.pracaDate,
             p.lastPromotionDate,
             p.presentationDate,
+            p.prorrogacaoDate || '',
             p.healthInspectionDate,
             p.healthInspectionValidity,
             p.serviceTime || '',
@@ -649,6 +695,153 @@ async function resetDatabase() {
         } catch (e) {
             console.error(e);
             alert("Erro de comunicação ao resetar base de dados.");
+        }
+    }
+}
+
+// ─── MÓDULO DE SEÇÕES ───
+async function fetchSecoes() {
+    try {
+        const response = await fetch('api.php?action=list_secoes');
+        const result = await response.json();
+        if (result.success) {
+            secoesData = result.data;
+            populateSecoesDropdown();
+        } else {
+            console.error("Erro ao listar seções:", result.message);
+        }
+    } catch (e) {
+        console.error("Erro na comunicação para listar seções:", e);
+    }
+}
+
+function populateSecoesDropdown() {
+    const select = document.getElementById('field-secao');
+    if (!select) return;
+    
+    // Guarda o valor selecionado para restaurar após popular
+    const currentVal = select.value;
+    
+    select.innerHTML = '<option value="" disabled selected>Selecione a seção</option>';
+    secoesData.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.sigla;
+        opt.innerText = s.sigla;
+        select.appendChild(opt);
+    });
+    
+    if (currentVal) {
+        select.value = currentVal;
+    }
+}
+
+function openSecoesModal() {
+    renderSecoesTable();
+    document.getElementById('secoes-modal').classList.add('active');
+    
+    // Adiciona listener de evento de submit do form se não tiver ainda
+    const form = document.getElementById('secao-form');
+    if (!form.hasAttribute('data-initialized')) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveSecao();
+        });
+        form.setAttribute('data-initialized', 'true');
+    }
+}
+
+function closeSecoesModal() {
+    document.getElementById('secoes-modal').classList.remove('active');
+    resetSecaoForm();
+}
+
+function resetSecaoForm() {
+    document.getElementById('secao-id').value = '';
+    document.getElementById('secao-sigla').value = '';
+}
+
+function renderSecoesTable() {
+    const tbody = document.querySelector('#secoes-table tbody');
+    tbody.innerHTML = '';
+    
+    if (secoesData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhuma seção cadastrada</td></tr>';
+        return;
+    }
+    
+    secoesData.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:bold;">${s.sigla}</td>
+            <td>
+                <div class="action-btns">
+                    <button class="btn btn-secondary btn-sm" onclick="editSecao('${s.id}')" title="Editar"><i data-lucide="edit-3" style="width: 14px; height: 14px;"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteSecao('${s.id}')" title="Excluir"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+function editSecao(id) {
+    const s = secoesData.find(item => item.id == id);
+    if (!s) return;
+    
+    document.getElementById('secao-id').value = s.id;
+    document.getElementById('secao-sigla').value = s.sigla;
+}
+
+async function saveSecao() {
+    const id = document.getElementById('secao-id').value;
+    const sigla = document.getElementById('secao-sigla').value.trim();
+    
+    if (!sigla) return alert("A sigla é obrigatória.");
+    
+    try {
+        const response = await fetch('api.php?action=save_secao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, sigla, nome: '', chefe_id: '' })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            resetSecaoForm();
+            await fetchSecoes(); // atualiza os dados e o select de militares
+            renderSecoesTable(); // renderiza a tabela na modal
+        } else {
+            alert("Erro: " + result.message);
+        }
+    } catch(e) {
+        console.error(e);
+        alert("Erro de comunicação ao salvar seção.");
+    }
+}
+
+async function deleteSecao(id) {
+    if (confirm("Tem certeza que deseja excluir esta seção?")) {
+        try {
+            const response = await fetch('api.php?action=delete_secao', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                await fetchSecoes();
+                renderSecoesTable();
+            } else {
+                alert("Erro: " + result.message);
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Erro de comunicação ao excluir seção.");
         }
     }
 }

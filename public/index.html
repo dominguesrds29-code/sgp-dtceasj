@@ -86,6 +86,9 @@
                 </div>
 
                 <div class="btn-group">
+                    <button class="btn btn-primary" onclick="openSecoesModal()" title="Gerenciar Seções">
+                        <i data-lucide="layers" style="width: 16px; height: 16px;"></i> Seções
+                    </button>
                     <button class="btn btn-gold" onclick="openAddModal()">
                         <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i> Novo Militar
                     </button>
@@ -102,22 +105,24 @@
                         <tr>
                             <th>Posto/Grad</th>
                             <th>Especialidade</th>
+                            <th>Seção</th>
                             <th>Nome Completo</th>
                             <th>Nome de Guerra</th>
                             <th>Identidade</th>
                             <th>CPF</th>
                             <th>SARAM</th>
-                            <th>Nascimento (Idade)</th>
+                            <th>Nascimento</th>
                             <th>Tempo de Serviço</th>
-                            <th>Reserva</th>
+                            <th>Para Reserva</th>
                             <th>Tempo DTCEA-SJ</th>
-                            <th>Inspeção de Saúde</th>
-                            <th>Ações</th>
+                            <th>Prorrogação</th>
+                            <th>Validade Insp. Saúde</th>
+                            <th style="width: 100px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
+                            <td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 3rem 0;">
                                 Carregando dados da base sgp_dtceasj...
                             </td>
                         </tr>
@@ -154,6 +159,12 @@
                         <div class="form-group">
                             <label for="field-specialty">Especialidade</label>
                             <input type="text" id="field-specialty" class="form-control" style="text-transform: uppercase;" placeholder="Ex: BCT, BCO, BET..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-secao">Seção *</label>
+                            <select id="field-secao" class="form-control" required>
+                                <option value="" disabled selected>Selecione a seção</option>
+                            </select>
                         </div>
                         <div class="form-group col-full">
                             <label for="field-name">Nome Completo</label>
@@ -207,8 +218,12 @@
                             <label for="field-healthInspectionValidity">Validade Insp. Saúde</label>
                             <input type="text" id="field-healthInspectionValidity" class="form-control" placeholder="DD/MM/AAAA">
                         </div>
+                        <div class="form-group">
+                            <label for="field-prorrogacao">Prorrogação</label>
+                            <input type="text" id="field-prorrogacao" class="form-control" placeholder="DD/MM/AAAA">
+                        </div>
 
-                        <!-- Cálculos Automáticos de Serviço -->
+                        <h4 style="margin-top: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary); grid-column: 1 / -1;">Informações de Serviço</h4>
                         <div class="form-group">
                             <label for="field-serviceTime">Tempo de Serviço</label>
                             <input type="text" id="field-serviceTime" class="form-control" placeholder="Cálculo automático" readonly>
@@ -234,6 +249,46 @@
                     <button type="submit" class="btn btn-gold">Salvar Registro</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL SEÇÕES -->
+    <div id="secoes-modal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Gerenciar Seções</h3>
+                <button class="modal-close-btn" onclick="closeSecoesModal()">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Formulário de cadastro rápido de seção -->
+                <form id="secao-form" style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
+                    <input type="hidden" id="secao-id" value="">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="secao-sigla">Sigla da Seção</label>
+                        <input type="text" id="secao-sigla" class="form-control" style="text-transform: uppercase;" placeholder="Ex: TWR" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-gold" style="height: 38px;">Salvar</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetSecaoForm()" style="height: 38px;" title="Cancelar Edição"><i data-lucide="x-circle" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </form>
+
+                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table id="secoes-table">
+                        <thead>
+                            <tr>
+                                <th>Sigla da Seção</th>
+                                <th style="width: 80px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
