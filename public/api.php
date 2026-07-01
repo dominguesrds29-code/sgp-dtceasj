@@ -57,7 +57,7 @@ function formatSQLToDate($sqlStr) {
 
 function getSecoesList() {
     global $conn;
-    $result = $conn->query("SELECT * FROM secoes ORDER BY sigla ASC");
+    $result = $conn->query("SELECT id, code as sigla, name as nome FROM sections ORDER BY code ASC");
     $list = [];
     if($result) {
         while ($row = $result->fetch_assoc()) {
@@ -76,8 +76,8 @@ function saveSecao() {
     }
     $id = isset($data['id']) ? intval($data['id']) : 0;
     $sigla = isset($data['sigla']) ? mb_strtoupper($conn->real_escape_string($data['sigla']), 'UTF-8') : '';
-    $nome = isset($data['nome']) ? mb_strtoupper($conn->real_escape_string($data['nome']), 'UTF-8') : '';
-    $chefe_id = (isset($data['chefe_id']) && $data['chefe_id'] !== '') ? intval($data['chefe_id']) : 'NULL';
+    $nome = isset($data['nome']) && $data['nome'] !== '' ? mb_strtoupper($conn->real_escape_string($data['nome']), 'UTF-8') : $sigla;
+    // chefe_id does not exist in sections, removed.
 
     if (empty($sigla)) {
         echo json_encode(["success" => false, "message" => "Sigla é obrigatória."]);
@@ -85,14 +85,14 @@ function saveSecao() {
     }
 
     if ($id > 0) {
-        $sql = "UPDATE secoes SET sigla='$sigla', nome='$nome', chefe_id=$chefe_id WHERE id=$id";
+        $sql = "UPDATE sections SET code='$sigla', name='$nome' WHERE id=$id";
         if ($conn->query($sql)) {
             echo json_encode(["success" => true, "message" => "Seção atualizada com sucesso."]);
         } else {
             echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
         }
     } else {
-        $sql = "INSERT INTO secoes (sigla, nome, chefe_id) VALUES ('$sigla', '$nome', $chefe_id)";
+        $sql = "INSERT INTO sections (code, name, extension_line) VALUES ('$sigla', '$nome', '0000')";
         if ($conn->query($sql)) {
             echo json_encode(["success" => true, "message" => "Seção cadastrada com sucesso."]);
         } else {
@@ -111,7 +111,7 @@ function deleteSecao() {
         return;
     }
 
-    $sql = "DELETE FROM secoes WHERE id = $id";
+    $sql = "DELETE FROM sections WHERE id = $id";
     if ($conn->query($sql)) {
         echo json_encode(["success" => true, "message" => "Seção removida com sucesso."]);
     } else {
@@ -130,7 +130,7 @@ function getPersonnelList() {
         seedDatabaseFromCSV();
     }
 
-    $result = $conn->query("SELECT u.*, s.sigla as secao_sigla FROM users u LEFT JOIN secoes s ON u.section_id = s.id WHERE u.deleted_at IS NULL ORDER BY u.name ASC");
+    $result = $conn->query("SELECT u.*, s.code as secao_sigla FROM users u LEFT JOIN sections s ON u.section_id = s.id WHERE u.deleted_at IS NULL ORDER BY u.name ASC");
     $list = [];
     if($result) {
         while ($row = $result->fetch_assoc()) {
@@ -204,7 +204,7 @@ function savePerson() {
     $secao_sigla = isset($data['secao']) ? mb_strtoupper($conn->real_escape_string($data['secao']), 'UTF-8') : '';
     $section_id = 'NULL';
     if ($secao_sigla) {
-        $sec_res = $conn->query("SELECT id FROM secoes WHERE sigla='$secao_sigla' LIMIT 1");
+        $sec_res = $conn->query("SELECT id FROM sections WHERE code='$secao_sigla' LIMIT 1");
         if ($sec_res && $sec_res->num_rows > 0) {
             $sec_row = $sec_res->fetch_assoc();
             $section_id = $sec_row['id'];
@@ -231,7 +231,7 @@ function savePerson() {
         }
     } else {
         if ($section_id === 'NULL') {
-            $sec_res = $conn->query("SELECT id FROM secoes LIMIT 1");
+            $sec_res = $conn->query("SELECT id FROM sections LIMIT 1");
             if ($sec_res && $sec_res->num_rows > 0) {
                 $section_id = $sec_res->fetch_assoc()['id'];
             } else {
@@ -304,7 +304,7 @@ function seedDatabaseFromCSV() {
     fgetcsv($file);
 
     $default_section = 1;
-    $sec_res = $conn->query("SELECT id FROM secoes LIMIT 1");
+    $sec_res = $conn->query("SELECT id FROM sections LIMIT 1");
     if ($sec_res && $sec_res->num_rows > 0) {
         $default_section = $sec_res->fetch_assoc()['id'];
     }
