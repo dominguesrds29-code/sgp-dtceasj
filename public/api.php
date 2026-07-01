@@ -8,31 +8,35 @@ require_once 'config.php';
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 
-switch ($action) {
-    case 'list':
-        getPersonnelList();
-        break;
-    case 'save':
-        savePerson();
-        break;
-    case 'delete':
-        deletePerson();
-        break;
-    case 'reset':
-        resetFromCSV();
-        break;
-    case 'list_secoes':
-        getSecoesList();
-        break;
-    case 'save_secao':
-        saveSecao();
-        break;
-    case 'delete_secao':
-        deleteSecao();
-        break;
-    default:
-        echo json_encode(["success" => false, "message" => "Ação inválida."]);
-        break;
+try {
+    switch ($action) {
+        case 'list':
+            getPersonnelList();
+            break;
+        case 'save':
+            savePerson();
+            break;
+        case 'delete':
+            deletePerson();
+            break;
+        case 'reset':
+            resetFromCSV();
+            break;
+        case 'list_secoes':
+            getSecoesList();
+            break;
+        case 'save_secao':
+            saveSecao();
+            break;
+        case 'delete_secao':
+            deleteSecao();
+            break;
+        default:
+            echo json_encode(["success" => false, "message" => "Ação inválida."]);
+            break;
+    }
+} catch (Throwable $e) {
+    echo json_encode(["success" => false, "message" => "Erro PHP/SQL: " . $e->getMessage() . " na linha " . $e->getLine()]);
 }
 
 function formatDateToSQL($dateStr) {
