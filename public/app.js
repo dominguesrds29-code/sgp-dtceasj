@@ -77,13 +77,14 @@ async function fetchPersonnel() {
             dbStatusEl.style.color = "var(--accent-red)";
         }
         
-        // Renderiza tabela vazia com mensagem de erro
         const tbody = document.querySelector('#personnel-table tbody');
         tbody.innerHTML = `
             <tr>
                 <td colspan="13" style="text-align: center; color: var(--accent-red); padding: 3rem 0; font-weight: 500;">
                     <i data-lucide="database-backup" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>
-                    Não foi possível conectar à base de dados MySQL. Verifique se o Apache e o MySQL estão ativos no XAMPP.
+                    Não foi possível carregar os dados.
+                    <br><br>
+                    <small style="color:#a00; font-family: monospace; font-size: 14px;">Motivo: ${e.message}</small>
                 </td>
             </tr>
         `;
