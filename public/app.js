@@ -357,11 +357,11 @@ function renderTable() {
 
     const filtered = personnelData.filter(p => {
         const matchSearch = !searchQuery || 
-            p.name.toLowerCase().includes(searchQuery) ||
-            p.specialty.toLowerCase().includes(searchQuery) ||
-            p.identity.toLowerCase().includes(searchQuery) ||
-            p.cpf.toLowerCase().includes(searchQuery) ||
-            p.saram.toLowerCase().includes(searchQuery);
+            (p.name || '').toLowerCase().includes(searchQuery) ||
+            (p.specialty || '').toLowerCase().includes(searchQuery) ||
+            (p.identity || '').toLowerCase().includes(searchQuery) ||
+            (p.cpf || '').toLowerCase().includes(searchQuery) ||
+            (p.saram || '').toLowerCase().includes(searchQuery);
 
         const matchRank = !rankFilter || p.rank === rankFilter;
         const matchSpecialty = !specialtyFilter || p.specialty === specialtyFilter;
