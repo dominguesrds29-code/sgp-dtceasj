@@ -439,7 +439,6 @@ function renderTable() {
             <td>${p.identity || '-'}</td>
             <td>${p.cpf || '-'}</td>
             <td>${p.saram || '-'}</td>
-            <td>${p.birthDate} (${p.age || '?'})</td>
             <td>${p.serviceTime || '-'}</td>
             <td>${reserveText}</td>
             <td>${p.timeDtceaSj || '-'}</td>
