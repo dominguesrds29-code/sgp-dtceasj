@@ -424,7 +424,7 @@ function renderTable() {
         if (trStyle) tr.setAttribute('style', trStyle);
 
         const actionBtns = isAdmin ? `
-            <span class="action-btns-inline" style="margin-left: 8px; display: inline-flex; gap: 4px;">
+            <span class="action-btns-inline" style="display: inline-flex; gap: 4px;">
                 <button class="btn-icon" onclick="editPerson('${p.id}')" title="Editar"><i data-lucide="edit-3" style="width: 14px; height: 14px; color: var(--fab-blue);"></i></button>
                 <button class="btn-icon" onclick="deletePerson('${p.id}')" title="Excluir"><i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--accent-red);"></i></button>
             </span>
@@ -434,7 +434,7 @@ function renderTable() {
             <td><span class="rank-badge">${p.rank}</span></td>
             <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.specialty || '-'}</span></td>
             <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.secao || '-'}</span></td>
-            <td style="${nameStyle}; display: flex; align-items: center;">${p.name}${actionBtns}</td>
+            <td style="${nameStyle};">${p.name}</td>
             <td style="font-weight: 600; color: var(--text-primary);">${p.warName || '-'}</td>
             <td>${p.identity || '-'}</td>
             <td>${p.cpf || '-'}</td>
@@ -445,6 +445,7 @@ function renderTable() {
             <td>${p.timeDtceaSj || '-'}</td>
             <td>${prorrogacaoCell}</td>
             <td>${healthCell}</td>
+            <td class="admin-only" style="text-align: center;">${actionBtns}</td>
         `;
         tbody.appendChild(tr);
     });
