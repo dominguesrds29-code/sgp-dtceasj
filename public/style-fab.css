@@ -570,3 +570,6 @@ textarea.form-control {
         width: 100%;
     }
 }
+
+.btn-icon { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; }
+.btn-icon:hover { background-color: var(--border-color); }

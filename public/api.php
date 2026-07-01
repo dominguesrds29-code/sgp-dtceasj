@@ -1,4 +1,5 @@
 <?php
+session_start();
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -14,22 +15,36 @@ try {
             getPersonnelList();
             break;
         case 'save':
+            requireAdmin();
             savePerson();
             break;
         case 'delete':
+            requireAdmin();
             deletePerson();
             break;
         case 'reset':
+            requireAdmin();
             resetFromCSV();
             break;
         case 'list_secoes':
             getSecoesList();
             break;
         case 'save_secao':
+            requireAdmin();
             saveSecao();
             break;
         case 'delete_secao':
+            requireAdmin();
             deleteSecao();
+            break;
+        case 'login':
+            loginUser();
+            break;
+        case 'logout':
+            logoutUser();
+            break;
+        case 'check_auth':
+            checkAuth();
             break;
         default:
             echo json_encode(["success" => false, "message" => "Ação inválida."]);
@@ -37,6 +52,52 @@ try {
     }
 } catch (Throwable $e) {
     echo json_encode(["success" => false, "message" => "Erro PHP/SQL: " . $e->getMessage() . " na linha " . $e->getLine()]);
+}
+
+function requireAdmin() {
+    if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+        echo json_encode(["success" => false, "message" => "Acesso negado. Apenas administradores podem realizar esta ação.", "authError" => true]);
+        exit;
+    }
+}
+
+function loginUser() {
+    global $conn;
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (!$data || !isset($data['email']) || !isset($data['password'])) {
+        echo json_encode(["success" => false, "message" => "Credenciais inválidas."]);
+        return;
+    }
+    $email = $conn->real_escape_string(trim($data['email']));
+    $password = $data['password'];
+
+    $result = $conn->query("SELECT id, name, password, is_admin FROM users WHERE email='$email' LIMIT 1");
+    if ($result && $result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['name'] = $user['name'];
+            $_SESSION['is_admin'] = intval($user['is_admin']);
+            echo json_encode(["success" => true, "is_admin" => $_SESSION['is_admin'] == 1]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Senha incorreta."]);
+        }
+    } else {
+        echo json_encode(["success" => false, "message" => "Usuário não encontrado."]);
+    }
+}
+
+function logoutUser() {
+    session_destroy();
+    echo json_encode(["success" => true]);
+}
+
+function checkAuth() {
+    if (isset($_SESSION['user_id'])) {
+        echo json_encode(["success" => true, "logged_in" => true, "is_admin" => $_SESSION['is_admin'] == 1]);
+    } else {
+        echo json_encode(["success" => true, "logged_in" => false]);
+    }
 }
 
 function formatDateToSQL($dateStr) {
@@ -152,12 +213,16 @@ function getPersonnelList() {
                 'data_insp_saude' => formatSQLToDate($row['data_insp_saude']),
                 'validade_insp_saude' => formatSQLToDate($row['validade_insp_saude']),
                 'prorrogacao' => formatSQLToDate($row['prorrogacao']),
-                'observacoes' => $row['observacoes']
+                'observacoes' => $row['observacoes'],
+                'is_admin' => intval($row['is_admin']),
+                'person_type' => $row['person_type']
             ];
         }
     }
     
-    echo json_encode(["success" => true, "data" => $list]);
+    // Add is_admin status of current user to response
+    $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+    echo json_encode(["success" => true, "data" => $list, "is_admin" => $is_admin]);
 }
 
 function savePerson() {
@@ -200,6 +265,8 @@ function savePerson() {
     $prorrogacao_sql = $prorrogacao ? "'" . $conn->real_escape_string($prorrogacao) . "'" : "NULL";
     
     $observacoes = isset($data['observacoes']) ? $conn->real_escape_string($data['observacoes']) : '';
+    $is_admin_flag = isset($data['is_admin']) && $data['is_admin'] ? 1 : 0;
+    $person_type = isset($data['person_type']) && $data['person_type'] === 'CIVIL' ? 'CIVIL' : 'MILITAR';
 
     $secao_sigla = isset($data['secao']) ? mb_strtoupper($conn->real_escape_string($data['secao']), 'UTF-8') : '';
     $section_id = 'NULL';
@@ -221,7 +288,7 @@ function savePerson() {
                 grade='$grade', specialty='$specialty', name='$name', war_name='$war_name',
                 identidade='$identidade', cpf='$cpf', saram='$saram', birth_date=$birth_date_sql, praca=$praca_sql, 
                 ult_promocao=$ult_promocao_sql, apresentacao_dtcea=$apresentacao_dtcea_sql, 
-                data_insp_saude=$data_insp_saude_sql, validade_insp_saude=$validade_insp_saude_sql, section_id=$section_id, prorrogacao=$prorrogacao_sql, observacoes='$observacoes'
+                data_insp_saude=$data_insp_saude_sql, validade_insp_saude=$validade_insp_saude_sql, section_id=$section_id, prorrogacao=$prorrogacao_sql, observacoes='$observacoes', is_admin=$is_admin_flag, person_type='$person_type'
                 WHERE id=$id";
         
         if ($conn->query($sql)) {
@@ -244,10 +311,10 @@ function savePerson() {
 
         $sql = "INSERT INTO users (
                     grade, specialty, name, war_name, identidade, cpf, saram,
-                    birth_date, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, section_id, prorrogacao, observacoes, email, password, escala
+                    birth_date, praca, ult_promocao, apresentacao_dtcea, data_insp_saude, validade_insp_saude, section_id, prorrogacao, observacoes, email, password, escala, is_admin, person_type
                 ) VALUES (
                     '$grade', '$specialty', '$name', '$war_name', '$identidade', '$cpf', '$saram',
-                    $birth_date_sql, $praca_sql, $ult_promocao_sql, $apresentacao_dtcea_sql, $data_insp_saude_sql, $validade_insp_saude_sql, $section_id, $prorrogacao_sql, '$observacoes', '$email', '$password', 0
+                    $birth_date_sql, $praca_sql, $ult_promocao_sql, $apresentacao_dtcea_sql, $data_insp_saude_sql, $validade_insp_saude_sql, $section_id, $prorrogacao_sql, '$observacoes', '$email', '$password', 0, $is_admin_flag, '$person_type'
                 )";
         
         if ($conn->query($sql)) {

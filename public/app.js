@@ -3,6 +3,8 @@
 
 let personnelData = [];
 let secoesData = [];
+let currentUser = null;
+let isAdmin = false;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,12 +17,69 @@ async function initApp() {
         window.lucide.createIcons();
     }
     
-    // Carrega dados da API PHP
-    await fetchSecoes();
-    await fetchPersonnel();
-
     // Configura eventos de formulários e modais
     setupEventListeners();
+    
+    // Verifica sessão e depois carrega os dados
+    await checkAuth();
+}
+
+async function checkAuth() {
+    try {
+        const response = await fetch('api.php?action=check_auth');
+        const data = await response.json();
+        
+        if (data.logged_in) {
+            isAdmin = data.is_admin;
+            document.getElementById('login-modal').classList.remove('active');
+            
+            // Controle UI baseado em permissão
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'inline-flex' : 'none');
+            document.querySelectorAll('.admin-only-field').forEach(el => el.style.display = isAdmin ? 'flex' : 'none');
+            document.getElementById('header-actions').style.display = 'flex';
+            
+            // Carrega dados da API PHP
+            await fetchSecoes();
+            await fetchPersonnel();
+        } else {
+            // Mostra tela de login
+            document.getElementById('login-modal').classList.add('active');
+            document.getElementById('header-actions').style.display = 'none';
+        }
+    } catch (e) {
+        console.error("Erro ao verificar auth:", e);
+    }
+}
+
+document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+    
+    try {
+        const response = await fetch('api.php?action=login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const result = await response.json();
+        if (result.success) {
+            checkAuth();
+        } else {
+            errorEl.innerText = result.message;
+            errorEl.style.display = 'block';
+        }
+    } catch (e) {
+        errorEl.innerText = "Erro de conexão com o servidor.";
+        errorEl.style.display = 'block';
+    }
+});
+
+async function logout() {
+    await fetch('api.php?action=logout');
+    window.location.reload();
 }
 
 // Buscar dados da API
@@ -51,7 +110,9 @@ async function fetchPersonnel() {
                     healthInspectionDate: item.data_insp_saude,
                     healthInspectionValidity: item.validade_insp_saude,
                     prorrogacaoDate: item.prorrogacao,
-                    observations: item.observacoes
+                    observations: item.observacoes,
+                    is_admin: item.is_admin,
+                    personType: item.person_type
                 };
                 
                 // Realiza cálculos em tempo real
@@ -292,6 +353,7 @@ function renderTable() {
     const specialtyFilter = document.getElementById('filter-specialty').value;
     const healthFilter = document.getElementById('filter-health').value;
     const reserveFilter = document.getElementById('filter-reserve').value;
+    const typeFilter = document.getElementById('filter-type').value;
 
     const filtered = personnelData.filter(p => {
         const matchSearch = !searchQuery || 
@@ -303,6 +365,7 @@ function renderTable() {
 
         const matchRank = !rankFilter || p.rank === rankFilter;
         const matchSpecialty = !specialtyFilter || p.specialty === specialtyFilter;
+        const matchType = typeFilter === 'TODOS' || p.personType === typeFilter;
 
         let matchHealth = true;
         if (healthFilter) {
@@ -319,7 +382,7 @@ function renderTable() {
             if (reserveFilter === 'LONG') matchReserve = p.timeToReserve !== null && p.timeToReserve > 5;
         }
 
-        return matchSearch && matchRank && matchSpecialty && matchHealth && matchReserve;
+        return matchSearch && matchRank && matchSpecialty && matchHealth && matchReserve && matchType;
     });
 
     if (filtered.length === 0) {
@@ -360,11 +423,18 @@ function renderTable() {
 
         if (trStyle) tr.setAttribute('style', trStyle);
 
+        const actionBtns = isAdmin ? `
+            <span class="action-btns-inline" style="margin-left: 8px; display: inline-flex; gap: 4px;">
+                <button class="btn-icon" onclick="editPerson('${p.id}')" title="Editar"><i data-lucide="edit-3" style="width: 14px; height: 14px; color: var(--fab-blue);"></i></button>
+                <button class="btn-icon" onclick="deletePerson('${p.id}')" title="Excluir"><i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--accent-red);"></i></button>
+            </span>
+        ` : '';
+
         tr.innerHTML = `
             <td><span class="rank-badge">${p.rank}</span></td>
             <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.specialty || '-'}</span></td>
             <td><span class="specialty-badge" style="background: var(--bg-main); border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 12px; color: var(--text-secondary);">${p.secao || '-'}</span></td>
-            <td style="${nameStyle}">${p.name}</td>
+            <td style="${nameStyle}; display: flex; align-items: center;">${p.name}${actionBtns}</td>
             <td style="font-weight: 600; color: var(--text-primary);">${p.warName || '-'}</td>
             <td>${p.identity || '-'}</td>
             <td>${p.cpf || '-'}</td>
@@ -375,12 +445,6 @@ function renderTable() {
             <td>${p.timeDtceaSj || '-'}</td>
             <td>${prorrogacaoCell}</td>
             <td>${healthCell}</td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn btn-secondary btn-sm" onclick="editPerson('${p.id}')" title="Editar"><i data-lucide="edit-3" style="width: 14px; height: 14px;"></i></button>
-                    <button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')" title="Excluir"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
-                </div>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -428,6 +492,7 @@ function setupEventListeners() {
     document.getElementById('filter-specialty').addEventListener('change', renderTable);
     document.getElementById('filter-health').addEventListener('change', renderTable);
     document.getElementById('filter-reserve').addEventListener('change', renderTable);
+    document.getElementById('filter-type').addEventListener('change', renderTable);
 
     // Modal Nova Ficha / Editar
     const modal = document.getElementById('person-modal');
@@ -507,6 +572,7 @@ function setupEventListeners() {
 
 // ─── CRUD OPERAÇÕES VIA PHP ───
 function openAddModal() {
+    if (!isAdmin) return;
     document.getElementById('modal-action').value = 'add';
     document.getElementById('modal-edit-id').value = '';
     document.getElementById('person-modal-title').innerText = "Novo Cadastro de Militar";
@@ -514,6 +580,8 @@ function openAddModal() {
     document.getElementById('field-specialty').value = "";
     document.getElementById('field-secao').value = "";
     document.getElementById('field-prorrogacao').value = "";
+    document.getElementById('field-personType').value = 'MILITAR';
+    document.getElementById('field-isAdmin').checked = false;
     document.getElementById('person-modal').classList.add('active');
 }
 
@@ -527,6 +595,7 @@ function editPerson(id) {
 
     // Popula campos
     document.getElementById('field-id').value = p.id;
+    document.getElementById('field-personType').value = p.personType || 'MILITAR';
     document.getElementById('field-rank').value = p.rank;
     document.getElementById('field-specialty').value = p.specialty || '';
     document.getElementById('field-secao').value = p.secao || '';
@@ -547,6 +616,7 @@ function editPerson(id) {
     document.getElementById('field-timeToReserve').value = p.timeToReserve !== null ? p.timeToReserve : '';
     document.getElementById('field-timeDtceaSj').value = p.timeDtceaSj || '';
     document.getElementById('field-observations').value = p.observations || '';
+    document.getElementById('field-isAdmin').checked = p.is_admin === 1;
 
     document.getElementById('person-modal').classList.add('active');
 }
@@ -571,7 +641,9 @@ async function savePerson() {
         data_insp_saude: document.getElementById('field-healthInspectionDate').value.trim(),
         validade_insp_saude: document.getElementById('field-healthInspectionValidity').value.trim(),
         prorrogacao: document.getElementById('field-prorrogacao').value.trim(),
-        observacoes: document.getElementById('field-observations').value.trim()
+        observacoes: document.getElementById('field-observations').value.trim(),
+        is_admin: document.getElementById('field-isAdmin').checked ? 1 : 0,
+        person_type: document.getElementById('field-personType').value
     };
 
     if (!payload.secao) {

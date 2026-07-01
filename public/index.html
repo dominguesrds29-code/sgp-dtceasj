@@ -24,6 +24,12 @@
                     <p class="subtitle">Controle Interno · DTCEA-SJ</p>
                 </div>
             </div>
+            <div class="header-actions" id="header-actions" style="display: none;">
+                <span id="logged-user-name" style="margin-right: 15px; color: var(--text-secondary); font-weight: 500;"></span>
+                <button class="btn btn-secondary" onclick="logout()" title="Sair do Sistema">
+                    <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Sair
+                </button>
+            </div>
         </header>
 
         <main>
@@ -62,9 +68,19 @@
                         <input type="text" id="search-input" class="search-input" placeholder="Buscar por Nome, Identidade, CPF, SARAM...">
                     </div>
                     
-                    <select id="filter-rank" class="filter-select">
-                        <option value="">Todos os Postos</option>
-                    </select>
+                    <div class="filter-item">
+                        <select id="filter-type" class="form-control">
+                            <option value="MILITAR" selected>Militares</option>
+                            <option value="CIVIL">Civis</option>
+                            <option value="TODOS">Todos (Mil. e Civis)</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <select id="filter-rank" class="form-control">
+                            <option value="">Todos os Postos</option>
+                        </select>
+                    </div>
 
                     <select id="filter-specialty" class="filter-select">
                         <option value="">Todas as Especialidades</option>
@@ -86,10 +102,10 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="openSecoesModal()" title="Gerenciar Seções">
+                    <button class="btn btn-primary admin-only" onclick="openSecoesModal()" title="Gerenciar Seções">
                         <i data-lucide="layers" style="width: 16px; height: 16px;"></i> Seções
                     </button>
-                    <button class="btn btn-gold" onclick="openAddModal()">
+                    <button class="btn btn-gold admin-only" onclick="openAddModal()">
                         <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i> Novo Militar
                     </button>
                     <button class="btn btn-secondary" onclick="exportToCSV()" title="Exportar CSV">
@@ -117,7 +133,6 @@
                             <th>Tempo DTCEA-SJ</th>
                             <th>Prorrogação</th>
                             <th>Validade Insp. Saúde</th>
-                            <th style="width: 100px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -153,7 +168,14 @@
                             <input type="text" id="field-id" class="form-control" placeholder="Automático" readonly>
                         </div>
                         <div class="form-group">
-                            <label for="field-rank">Posto / Graduação</label>
+                            <label for="field-personType">Tipo</label>
+                            <select id="field-personType" class="form-control">
+                                <option value="MILITAR" selected>Militar</option>
+                                <option value="CIVIL">Civil</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="field-rank">Posto/Grad.</label>
                             <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO, 1S, 2S, CAP..." required>
                         </div>
                         <div class="form-group">
@@ -237,10 +259,14 @@
                             <input type="text" id="field-timeDtceaSj" class="form-control" placeholder="Cálculo automático" readonly>
                         </div>
 
-                        <!-- Observações -->
+                        <!-- Observações e Permissões -->
                         <div class="form-group col-full">
                             <label for="field-observations">Observações</label>
                             <textarea id="field-observations" class="form-control" placeholder="Anotações internas..."></textarea>
+                        </div>
+                        <div class="form-group col-full admin-only-field" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <input type="checkbox" id="field-isAdmin" style="width: 18px; height: 18px;">
+                            <label for="field-isAdmin" style="margin: 0; font-weight: 500; cursor: pointer; color: var(--primary-color);">Conceder acesso de Administrador</label>
                         </div>
                     </div>
                 </div>
@@ -289,6 +315,31 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOGIN -->
+    <div id="login-modal" class="modal-overlay active" style="z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(248, 250, 252, 0.95);">
+        <div class="modal-container" style="max-width: 400px; padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <img src="dtcea_sj_logo.png" alt="Brasão DTCEA-SJ" style="width: 80px; height: 80px; margin-bottom: 1rem;">
+                <h2 style="color: var(--primary-color); margin-bottom: 0.5rem;">SGP DTCEA-SJ</h2>
+                <p style="color: var(--text-secondary);">Faça login para acessar o sistema</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">E-mail (Ex: saram@fab.mil.br)</label>
+                    <input type="email" id="login-email" class="form-control" required>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" class="form-control" required>
+                </div>
+                <div class="form-group" style="margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; height: 45px; justify-content: center; font-size: 1rem;">Entrar no Sistema</button>
+                </div>
+                <div id="login-error" style="color: #dc2626; text-align: center; margin-top: 1rem; display: none; font-size: 0.9rem;"></div>
+            </form>
         </div>
     </div>
 
