@@ -25,7 +25,8 @@
                 </div>
             </div>
             <div class="header-actions" id="header-actions" style="display: none;">
-                <span id="logged-user-name" style="margin-right: 15px; color: var(--text-secondary); font-weight: 500;"></span>
+                <span id="logged-user-name"
+                    style="margin-right: 15px; color: var(--text-secondary); font-weight: 500;"></span>
                 <button class="btn btn-secondary" onclick="logout()" title="Sair do Sistema">
                     <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Sair
                 </button>
@@ -65,9 +66,10 @@
                 <div class="search-filter-group">
                     <div class="input-container">
                         <i data-lucide="search" style="width: 16px; height: 16px;"></i>
-                        <input type="text" id="search-input" class="search-input" placeholder="Buscar por Nome, Identidade, CPF, SARAM...">
+                        <input type="text" id="search-input" class="search-input"
+                            placeholder="Buscar por Nome, Identidade, CPF, SARAM...">
                     </div>
-                    
+
                     <div class="filter-item">
                         <select id="filter-type" class="form-control">
                             <option value="MILITAR" selected>Militares</option>
@@ -159,7 +161,7 @@
             <form id="person-form">
                 <input type="hidden" id="modal-action" value="add">
                 <input type="hidden" id="modal-edit-id" value="">
-                
+
                 <div class="modal-body">
                     <div class="form-grid">
                         <!-- Identificação Básica -->
@@ -176,11 +178,13 @@
                         </div>
                         <div class="form-group">
                             <label for="field-rank">Posto/Grad.</label>
-                            <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO, 1S, 2S, CAP..." required>
+                            <input type="text" id="field-rank" class="form-control" placeholder="Ex: SO, 1S, 2S, CAP..."
+                                required>
                         </div>
                         <div class="form-group">
                             <label for="field-specialty">Especialidade</label>
-                            <input type="text" id="field-specialty" class="form-control" style="text-transform: uppercase;" placeholder="Ex: BCT, BCO, BET..." required>
+                            <input type="text" id="field-specialty" class="form-control"
+                                style="text-transform: uppercase;" placeholder="Ex: BCT, BCO, BET..." required>
                         </div>
                         <div class="form-group">
                             <label for="field-secao">Seção *</label>
@@ -190,11 +194,13 @@
                         </div>
                         <div class="form-group col-full">
                             <label for="field-name">Nome Completo</label>
-                            <input type="text" id="field-name" class="form-control" style="text-transform: uppercase;" placeholder="NOME COMPLETO DO MILITAR" required>
+                            <input type="text" id="field-name" class="form-control" style="text-transform: uppercase;"
+                                placeholder="NOME COMPLETO DO MILITAR" required>
                         </div>
                         <div class="form-group col-full">
                             <label for="field-warName">Nome de Guerra</label>
-                            <input type="text" id="field-warName" class="form-control" style="text-transform: uppercase;" placeholder="NOME DE GUERRA DO MILITAR" required>
+                            <input type="text" id="field-warName" class="form-control"
+                                style="text-transform: uppercase;" placeholder="NOME DE GUERRA DO MILITAR" required>
                         </div>
                         <div class="form-group">
                             <label for="field-identity">Identidade</label>
@@ -212,61 +218,77 @@
                         <!-- Administrativo -->
                         <div class="form-group">
                             <label for="field-birthDate">Data de Nascimento</label>
-                            <input type="text" id="field-birthDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                            <input type="text" id="field-birthDate" class="form-control" placeholder="DD/MM/AAAA"
+                                required>
                         </div>
                         <div class="form-group">
                             <label for="field-age">Idade (Autocalculada)</label>
-                            <input type="number" id="field-age" class="form-control" placeholder="Preencha Nascimento" readonly>
+                            <input type="number" id="field-age" class="form-control" placeholder="Preencha Nascimento"
+                                readonly>
                         </div>
                         <div class="form-group">
                             <label for="field-pracaDate">Data de Praça</label>
-                            <input type="text" id="field-pracaDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                            <input type="text" id="field-pracaDate" class="form-control" placeholder="DD/MM/AAAA"
+                                required>
                         </div>
                         <div class="form-group">
                             <label for="field-lastPromotionDate">Última Promoção</label>
-                            <input type="text" id="field-lastPromotionDate" class="form-control" placeholder="DD/MM/AAAA">
+                            <input type="text" id="field-lastPromotionDate" class="form-control"
+                                placeholder="DD/MM/AAAA">
                         </div>
                         <div class="form-group">
                             <label for="field-presentationDate">Apresentação no DTCEA</label>
-                            <input type="text" id="field-presentationDate" class="form-control" placeholder="DD/MM/AAAA" required>
+                            <input type="text" id="field-presentationDate" class="form-control" placeholder="DD/MM/AAAA"
+                                required>
                         </div>
 
                         <!-- Inspeção de Saúde -->
                         <div class="form-group">
                             <label for="field-healthInspectionDate">Realização Insp. Saúde</label>
-                            <input type="text" id="field-healthInspectionDate" class="form-control" placeholder="DD/MM/AAAA">
+                            <input type="text" id="field-healthInspectionDate" class="form-control"
+                                placeholder="DD/MM/AAAA">
                         </div>
                         <div class="form-group">
                             <label for="field-healthInspectionValidity">Validade Insp. Saúde</label>
-                            <input type="text" id="field-healthInspectionValidity" class="form-control" placeholder="DD/MM/AAAA">
+                            <input type="text" id="field-healthInspectionValidity" class="form-control"
+                                placeholder="DD/MM/AAAA">
                         </div>
                         <div class="form-group">
                             <label for="field-prorrogacao">Prorrogação</label>
                             <input type="text" id="field-prorrogacao" class="form-control" placeholder="DD/MM/AAAA">
                         </div>
 
-                        <h4 style="margin-top: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary); grid-column: 1 / -1;">Informações de Serviço</h4>
+                        <h4
+                            style="margin-top: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary); grid-column: 1 / -1;">
+                            Informações de Serviço</h4>
                         <div class="form-group">
                             <label for="field-serviceTime">Tempo de Serviço</label>
-                            <input type="text" id="field-serviceTime" class="form-control" placeholder="Cálculo automático" readonly>
+                            <input type="text" id="field-serviceTime" class="form-control"
+                                placeholder="Cálculo automático" readonly>
                         </div>
                         <div class="form-group">
                             <label for="field-timeToReserve">Anos para Reserva</label>
-                            <input type="number" id="field-timeToReserve" class="form-control" placeholder="Cálculo automático" readonly>
+                            <input type="number" id="field-timeToReserve" class="form-control"
+                                placeholder="Cálculo automático" readonly>
                         </div>
                         <div class="form-group col-full">
                             <label for="field-timeDtceaSj">Tempo no DTCEA-SJ</label>
-                            <input type="text" id="field-timeDtceaSj" class="form-control" placeholder="Cálculo automático" readonly>
+                            <input type="text" id="field-timeDtceaSj" class="form-control"
+                                placeholder="Cálculo automático" readonly>
                         </div>
 
                         <!-- Observações e Permissões -->
                         <div class="form-group col-full">
                             <label for="field-observations">Observações</label>
-                            <textarea id="field-observations" class="form-control" placeholder="Anotações internas..."></textarea>
+                            <textarea id="field-observations" class="form-control"
+                                placeholder="Anotações internas..."></textarea>
                         </div>
-                        <div class="form-group col-full admin-only-field" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <div class="form-group col-full admin-only-field"
+                            style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-body); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
                             <input type="checkbox" id="field-isAdmin" style="width: 18px; height: 18px;">
-                            <label for="field-isAdmin" style="margin: 0; font-weight: 500; cursor: pointer; color: var(--primary-color);">Conceder acesso de Administrador</label>
+                            <label for="field-isAdmin"
+                                style="margin: 0; font-weight: 500; cursor: pointer; color: var(--primary-color);">Conceder
+                                acesso de Administrador</label>
                         </div>
                     </div>
                 </div>
@@ -293,11 +315,14 @@
                     <input type="hidden" id="secao-id" value="">
                     <div class="form-group" style="flex: 1;">
                         <label for="secao-sigla">Sigla da Seção</label>
-                        <input type="text" id="secao-sigla" class="form-control" style="text-transform: uppercase;" placeholder="Ex: TWR" required>
+                        <input type="text" id="secao-sigla" class="form-control" style="text-transform: uppercase;"
+                            placeholder="Ex: TWR" required>
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn btn-gold" style="height: 38px;">Salvar</button>
-                        <button type="button" class="btn btn-secondary" onclick="resetSecaoForm()" style="height: 38px;" title="Cancelar Edição"><i data-lucide="x-circle" style="width: 16px; height: 16px;"></i></button>
+                        <button type="button" class="btn btn-secondary" onclick="resetSecaoForm()" style="height: 38px;"
+                            title="Cancelar Edição"><i data-lucide="x-circle"
+                                style="width: 16px; height: 16px;"></i></button>
                     </div>
                 </form>
 
@@ -319,16 +344,18 @@
     </div>
 
     <!-- MODAL DE LOGIN -->
-    <div id="login-modal" class="modal-overlay active" style="z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(248, 250, 252, 0.95);">
+    <div id="login-modal" class="modal-overlay active"
+        style="z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(248, 250, 252, 0.95);">
         <div class="modal-container" style="max-width: 400px; padding: 2rem;">
             <div style="text-align: center; margin-bottom: 2rem;">
-                <img src="dtcea_sj_logo.png" alt="Brasão DTCEA-SJ" style="width: 80px; height: 80px; margin-bottom: 1rem;">
+                <img src="dtcea_sj_logo.png" alt="Brasão DTCEA-SJ"
+                    style="width: 80px; height: 80px; margin-bottom: 1rem;">
                 <h2 style="color: var(--primary-color); margin-bottom: 0.5rem;">SGP DTCEA-SJ</h2>
                 <p style="color: var(--text-secondary);">Faça login para acessar o sistema</p>
             </div>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-email">E-mail (Ex: saram@fab.mil.br)</label>
+                    <label for="login-email">E-mail</label>
                     <input type="email" id="login-email" class="form-control" required>
                 </div>
                 <div class="form-group" style="margin-top: 1rem;">
@@ -336,9 +363,13 @@
                     <input type="password" id="login-password" class="form-control" required>
                 </div>
                 <div class="form-group" style="margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary" style="width: 100%; height: 45px; justify-content: center; font-size: 1rem;">Entrar no Sistema</button>
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; height: 45px; justify-content: center; font-size: 1rem;">Entrar no
+                        Sistema</button>
                 </div>
-                <div id="login-error" style="color: #dc2626; text-align: center; margin-top: 1rem; display: none; font-size: 0.9rem;"></div>
+                <div id="login-error"
+                    style="color: #dc2626; text-align: center; margin-top: 1rem; display: none; font-size: 0.9rem;">
+                </div>
             </form>
         </div>
     </div>
